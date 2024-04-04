@@ -16,18 +16,16 @@ jobs:
           username: ${{ secrets.SERVER_USERNAME }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: 22
-          script:  |
-            if ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true) }}; then
-              cd ./projects/ARB
-              git pull origin main
-              yarn
+          script: |
+            cd ./projects/alwaysReelsBot
+            git pull origin main
+            yarn
             
-              timeout 1m yarn prisma migrate deploy
+            timeout 1m yarn prisma migrate deploy
             
-              if [ $? -ne 0 ]; then 
+            if [ $? -ne 0 ]; then 
               echo "Error prisma migrate dev"
               exit 1
-              fi
-            
-              yarn build
             fi
+            
+            yarn build
