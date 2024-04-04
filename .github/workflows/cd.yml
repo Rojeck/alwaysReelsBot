@@ -1,17 +1,12 @@
 name: CD
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+  release:
+    types: [published]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    needs: check
 
     steps:
       - name: Deploy to Server
