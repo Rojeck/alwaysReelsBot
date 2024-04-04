@@ -9,6 +9,9 @@ jobs:
   install_deps_and_lint:
     runs-on: ubuntu-latest
 
+    env:
+      DATABASE_URL: "postgresql://postgres:arb@localhost:5432/arb?schema=public"
+
     steps:
       - uses: actions/checkout@v2
 
