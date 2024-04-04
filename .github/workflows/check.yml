@@ -28,12 +28,6 @@ jobs:
       - name: Start database container
         run: yarn service up -d
 
-      - name: Wait for database to be ready
-        run: |
-          while ! pg_isready -U postgres -d postgres; do
-            sleep 1
-          done
-
       - name: Migrate database
         run: yarn prisma migrate deploy
 
