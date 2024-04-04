@@ -1,0 +1,16 @@
+version: "3.9"
+services:
+  postgres:
+    container_name: ARB_pg_container
+    image: postgres:14.8-alpine3.18
+    environment:
+      POSTGRES_DB: "arb"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "arb"
+    volumes:
+      - arbdata:/var/lib/postgresql/volumes/data
+    ports:
+      - "5432:5432"
+
+volumes:
+  arbdata:

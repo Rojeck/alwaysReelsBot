@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  pull_request:
+      branches:
+        - main
+
+jobs:
+  install_deps_and_lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install dependencies
+        run: yarn install
+
+      - name: Yarn lint
+        run: yarn lint
+
+  check_database:
+    needs: install_deps_and_lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Start database container
+        run: docker-compose up -d db
+
+      - name: Wait for database to be ready
+        run: |
+          while ! pg_isready -U postgres -d postgres; do
+            sleep 1
+          done
+
+      - name: Migrate database
+        run: yarn prisma migrate deploy
+
+  build:
+    needs: check_database
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Build application
+        run: yarn build
