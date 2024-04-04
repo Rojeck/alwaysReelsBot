@@ -26,6 +26,8 @@ jobs:
       DATABASE_URL: "postgresql://postgres:arb@localhost:5432/arb?schema=public"
 
     steps:
+      - uses: actions/checkout@v2
+
       - name: Start database container
         run: yarn service up -d
 
@@ -37,5 +39,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - uses: actions/checkout@v2
+
+      - name: Install dependencies
+        run: yarn install
+
       - name: Build application
         run: yarn build
