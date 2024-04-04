@@ -22,3 +22,4 @@ jobs:
             yarn &&
             yarn prisma migrate deploy &&
             yarn build
+
