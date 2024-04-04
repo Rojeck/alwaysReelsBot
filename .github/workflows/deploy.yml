@@ -11,6 +11,8 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    needs: check
+
     steps:
       - name: Deploy to Server
         uses: appleboy/ssh-action@master
