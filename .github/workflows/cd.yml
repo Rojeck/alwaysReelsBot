@@ -24,3 +24,4 @@ jobs:
             yarn &&
             npx prisma migrate deploy &&
             yarn build
+            pm2 restart ${{ secrets.PM2_PROCESS }}

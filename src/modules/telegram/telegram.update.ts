@@ -57,7 +57,7 @@ Just add the bot to your Telegram group and <b>give it access to messages</b>.`,
       return;
     }
 
-    const caption = `<b>:D From:</b> @${
+    const caption = `<b>From:</b> @${
       from.username || from.first_name
     }  \n<b>Original</b>: <a href="${messageText}">Link</a>`;
 
