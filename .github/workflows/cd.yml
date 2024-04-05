@@ -9,11 +9,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Use Node.js 20
-        uses: actions/setup-node@v3
-        with:
-         node-version: 20
-
       - name: Deploy to Server
         uses: appleboy/ssh-action@master
         with:
@@ -21,4 +16,11 @@ jobs:
           username: ${{ secrets.SERVER_USERNAME }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: 22
-          script: bash ./projects/alwaysReelsBot/deploy.sh
+          script: |
+            source ~/.nvm/nvm.sh &&
+            nvm use 20 &&
+            cd ./projects/alwaysReelsBot &&
+            git pull origin main &&
+            yarn &&
+            npx prisma migrate deploy &&
+            yarn build
