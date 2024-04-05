@@ -17,15 +17,8 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: 22
           script: |
-            cd ./projects/alwaysReelsBot
-            git pull origin main
-            yarn
-            
-            timeout 1m yarn prisma migrate deploy
-            
-            if [ $? -ne 0 ]; then 
-              echo "Error prisma migrate dev"
-              exit 1
-            fi
-            
+            cd ./projects/alwaysReelsBot &&
+            git pull origin main &&
+            yarn &&
+            npx prisma migrate deploy &&
             yarn build
