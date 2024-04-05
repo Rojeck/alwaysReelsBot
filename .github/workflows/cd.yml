@@ -21,9 +21,4 @@ jobs:
           username: ${{ secrets.SERVER_USERNAME }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: 22
-          script: |
-            cd ./projects/alwaysReelsBot &&
-            git pull origin main &&
-            yarn &&
-            npx prisma migrate deploy &&
-            yarn build
+          script: bash ./projects/alwaysReelsBot/deploy.sh
