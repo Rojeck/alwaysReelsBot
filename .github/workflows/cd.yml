@@ -19,7 +19,7 @@ jobs:
           script: |
             source ~/.nvm/nvm.sh &&
             nvm use 20 &&
-            cd ./projects/alwaysReelsBot &&
+            cd ${{ secrets.PROJECT_PATH}} &&
             git pull origin main &&
             yarn &&
             npx prisma migrate deploy &&
