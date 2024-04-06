@@ -8,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { reelsCheck } from '../../utils/instagram';
 import { UseGuards } from '@nestjs/common';
 import { TgMsgThrottlerGuard } from '../../common/guards/TgMsgThrottler.guard';
+import { startMsgEng, startMsgUk } from '../../constants';
 
 type Context = SceneContext;
 
@@ -25,6 +26,15 @@ export class TelegramUpdate {
     const isStartNotificationEnabled = this.config.get(
       'ENABLE_NOTIFICATION_ON_START',
     );
+    const { from, chat } = (ctx.update as any)?.message as TgTextMessage;
+
+    // prohibit start in another chat, except chat with a bot
+    if (from.id !== chat.id) {
+      return;
+    }
+
+    const startMessage = from.language_code !== 'uk' ? startMsgUk : startMsgEng;
+    await ctx.replyWithHTML(startMessage);
 
     if (isStartNotificationEnabled) {
       void this.notificationService.sendNotification(
@@ -34,13 +44,6 @@ export class TelegramUpdate {
        Tag: ${ctx.from.username}`,
       );
     }
-
-    await ctx.replyWithHTML(
-      `<b>Бот для парсингу Instagram Reels</b>
-Просто добавте бота у вашу телеграм групу та <b>надайте йому доступ до повідомлень</b>.
-\n<b>Bot for parsing Instagram Reels</b>
-Just add the bot to your Telegram group and <b>give it access to messages</b>.`,
-    );
   }
 
   @On('text')
@@ -48,10 +51,6 @@ Just add the bot to your Telegram group and <b>give it access to messages</b>.`,
   async onTextMessage(@Ctx() ctx: Context) {
     const message = ctx.message as unknown as TgTextMessage;
     const { text: messageText, from, chat } = message;
-
-    if (chat.id === from.id || from.is_bot) {
-      return;
-    }
 
     if (!reelsCheck(messageText)) {
       return;
