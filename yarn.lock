@@ -518,7 +518,7 @@
 
 "@types/query-string@^6.3.0":
   version "6.3.0"
-  resolved "https://registry.npmjs.org/@types/query-string/-/query-string-6.3.0.tgz"
+  resolved "https://registry.yarnpkg.com/@types/query-string/-/query-string-6.3.0.tgz#b6fa172a01405abcaedac681118e78429d62ea39"
   integrity sha512-yuIv/WRffRzL7cBW+sla4HwBZrEXRNf1MKQ5SklPEadth+BKbDxiVG8A3iISN5B3yC4EeSCzMZP8llHTcUhOzQ==
   dependencies:
     query-string "*"
