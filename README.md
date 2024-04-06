@@ -39,7 +39,7 @@ The bot is written in Nest.js using nestjs-telegraf
 This project is free and open source, if you like my work, please consider:
 <br>
 <div align='center'>
-  <a href="https://www.buymeacoffee.com/always_close"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=&slug=always_close&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff" /></a>
+  <a href="https://www.buymeacoffee.com/always_close"><img alt="buy me a coffee" src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=&slug=always_close&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff" /></a>
 </div>
 
 ## Contribution
