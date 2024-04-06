@@ -10,9 +10,9 @@ datasource db {
 model AuditEvents {
   id        Int      @id @default(autoincrement())
   postUrl   String
-  userTag   String
-  groupName String
-  groupType String
+  userTag   String?
+  groupName String?
+  groupType String?
   groupId   String
   createdAt DateTime @default(now()) @map("created_at")
 }
