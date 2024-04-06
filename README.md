@@ -9,7 +9,7 @@
 
 - Open a chat with the bot and send the link to the Instagram reels you want to download
 - The bot will reply to you with the video in MP4 format
-- You can add the bot to your Telegram group and <b>grant it access to messages</b> (required)
+- You can add the bot to your Telegram group
 - If someone in the group sends a link to an Instagram reel, the bot will reply with the corresponding video in MP4 format
 
 
@@ -27,7 +27,7 @@ The bot is written in Nest.js using nestjs-telegraf
 
 1. Make sure you have node and yarn package manager installed
 2. Clone the repository to your local machine.
-3. Install the necessary dependencies using `yarn install`.
+3. Install the necessary dependencies using `yarn install`
 4. Create a `.env` file in the project's root directory and add the required environment variables from `.example.env`
 5. Run database using `yarn service up`
 6. Apply database migrations using `yarn prisma migrate deploy`
