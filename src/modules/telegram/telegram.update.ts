@@ -27,7 +27,7 @@ export class TelegramUpdate {
       'ENABLE_NOTIFICATION_ON_START',
     );
     const { from, chat } = (ctx.update as any)?.message as TgTextMessage;
-    console.log(from);
+
     // prohibit start in another chat, except chat with a bot
     if (from.id !== chat.id) {
       return;
