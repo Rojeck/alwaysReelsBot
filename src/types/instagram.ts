@@ -148,3 +148,11 @@ export type GraphQLResponse = {
     is_final: boolean;
   };
 };
+
+export interface VideoInfo {
+  url: string;
+  width: number;
+  height: number;
+  thumbnail: string;
+  duration: number;
+}
