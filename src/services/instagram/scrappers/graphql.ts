@@ -1,5 +1,5 @@
 import { HttpService } from '@nestjs/axios';
-import { GraphQLResponse } from '../../../types/instagram';
+import { GraphQLResponse, VideoInfo } from '../../../types/instagram';
 import { catchError, lastValueFrom } from 'rxjs';
 import { AxiosResponse } from 'axios';
 import { stringify } from 'query-string';
@@ -52,7 +52,7 @@ const encodePostRequestData = (shortcode: string) => {
 export const fetchFromGraphQL = async (
   postId: string,
   httpService: HttpService,
-) => {
+): Promise<VideoInfo> => {
   const API_URL = 'https://www.instagram.com/api/graphql';
   const headers = {
     Accept: '*/*',
@@ -99,5 +99,11 @@ export const fetchFromGraphQL = async (
     return null;
   }
 
-  return data?.video_url;
+  return {
+    url: data.video_url,
+    width: data.dimensions.width,
+    height: data.dimensions.height,
+    thumbnail: data.display_url,
+    duration: data.video_duration,
+  };
 };

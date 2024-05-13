@@ -9,3 +9,8 @@ export const startMsgEng = `<b>Instagram Reels Parsing Bot</b>
 Send a link to the Instagram Reels you want to download, and the bot will reply with the video in MP4 format.
 
 You can add the bot to your Telegram group. If someone in the group sends a link to an Instagram Reels, the bot will reply with the corresponding video.`;
+
+export const startMsgBtnTextUk = 'Додати до групи'
+export const startMsgBtnTextEng = 'Add to group';
+export const footerBtnMsgUk = 'Без стиснення';
+export const footerBtnMsgEng = 'Without compression';

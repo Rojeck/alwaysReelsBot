@@ -8,7 +8,15 @@ import { ConfigService } from '@nestjs/config';
 import { reelsCheck } from '../../utils/instagram';
 import { UseGuards } from '@nestjs/common';
 import { TgMsgThrottlerGuard } from '../../common/guards/TgMsgThrottler.guard';
-import { startMsgEng, startMsgUk } from '../../constants';
+import {
+  footerBtnMsgEng,
+  footerBtnMsgUk,
+  startMsgBtnTextEng,
+  startMsgBtnTextUk,
+  startMsgEng,
+  startMsgUk,
+} from '../../constants';
+import axios from 'axios';
 
 type Context = SceneContext;
 
@@ -34,7 +42,21 @@ export class TelegramUpdate {
     }
 
     const startMessage = from.language_code === 'uk' ? startMsgUk : startMsgEng;
-    await ctx.replyWithHTML(startMessage);
+    const buttonText =
+      from.language_code === 'uk' ? startMsgBtnTextUk : startMsgBtnTextEng;
+
+    await ctx.replyWithHTML(startMessage, {
+      reply_markup: {
+        inline_keyboard: [
+          [
+            {
+              text: buttonText,
+              url: 'https://t.me/AlwaysReels_bot?startgroup',
+            },
+          ],
+        ],
+      },
+    });
 
     if (isStartNotificationEnabled) {
       void this.notificationService.sendNotification(
@@ -51,21 +73,66 @@ export class TelegramUpdate {
   async onTextMessage(@Ctx() ctx: Context) {
     const message = ctx.message as unknown as TgTextMessage;
     const { text: messageText, from, chat } = message;
+    let footer = {};
 
     if (!reelsCheck(messageText)) {
       return;
     }
 
-    const caption = `<b>From:</b> @${
-      from.username || from.first_name
-    }  \n<b>Original</b>: <a href="${messageText}">Link</a>`;
+    const isBotChat = from.id === chat.id;
+    const videoInfo = await this.instagramService.fetchPostJSON(messageText);
+    const buttonText =
+      from.language_code === 'uk' ? footerBtnMsgUk : footerBtnMsgEng;
 
-    const videoUrl = await this.instagramService.fetchPostJSON(messageText);
+    if (isBotChat) {
+      footer = {
+        reply_markup: {
+          inline_keyboard: [
+            [
+              {
+                text: buttonText,
+                url: videoInfo.url,
+              },
+            ],
+          ],
+        },
+      };
+    } else {
+      footer = {
+        caption: `<b>From:</b> @${
+          from.username || from.first_name
+        }  \n<b>Original</b>: <a href="${messageText}">Link</a>`,
+      };
+    }
 
-    await ctx.replyWithVideo(videoUrl, {
-      parse_mode: 'HTML',
-      caption,
-    });
+    await ctx
+      .replyWithVideo(videoInfo.url, {
+        parse_mode: 'HTML',
+        ...footer,
+      })
+      .catch(async () => {
+        const response = await axios.get(videoInfo.url, {
+          responseType: 'stream',
+        });
+        const { data: thumbnail } = await axios.get(videoInfo.thumbnail, {
+          responseType: 'stream',
+        });
+
+        await ctx.replyWithVideo(
+          { source: response.data },
+          {
+            thumbnail: {
+              source: thumbnail,
+            },
+            width: videoInfo.width,
+            height: videoInfo.height,
+            duration: videoInfo.duration,
+            ...footer,
+            parse_mode: 'HTML',
+          },
+        );
+      });
+
     await this.auditEventsService.create(messageText, chat, from);
   }
 }
