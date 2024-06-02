@@ -133,6 +133,11 @@ export class TelegramUpdate {
         );
       });
 
-    await this.auditEventsService.create(messageText, chat, from);
+    await this.auditEventsService.create(
+      messageText,
+      chat,
+      from,
+      videoInfo.downloadVia,
+    );
   }
 }

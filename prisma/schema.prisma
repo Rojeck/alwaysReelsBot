@@ -12,7 +12,7 @@ model AuditEvents {
   postUrl   String
   userTag   String?
   groupName String?
-  groupType String?
   groupId   String
+  downloadService String?
   createdAt DateTime @default(now()) @map("created_at")
 }
