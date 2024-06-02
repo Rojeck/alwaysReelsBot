@@ -1,8 +1,14 @@
 import { HttpService } from '@nestjs/axios';
-import { GraphQLResponse, VideoInfo } from '../../../types/instagram';
-import { catchError, lastValueFrom } from 'rxjs';
+import {
+  GraphQLResponse,
+  InstaDownloaders,
+  VideoInfo,
+} from '../../../types/instagram';
+import { catchError, lastValueFrom, of } from 'rxjs';
 import { AxiosResponse } from 'axios';
 import { stringify } from 'query-string';
+import { checkVideoURL } from '../checkVideoUrl';
+import constants from '../../../constants';
 
 const encodePostRequestData = (shortcode: string) => {
   const requestData = {
@@ -52,7 +58,7 @@ const encodePostRequestData = (shortcode: string) => {
 export const fetchFromGraphQL = async (
   postId: string,
   httpService: HttpService,
-): Promise<VideoInfo> => {
+): Promise<VideoInfo | string | null> => {
   const API_URL = 'https://www.instagram.com/api/graphql';
   const headers = {
     Accept: '*/*',
@@ -82,12 +88,12 @@ export const fetchFromGraphQL = async (
       })
       .pipe(
         catchError(() => {
-          return null;
+          return of(null);
         }),
       ),
   )) as AxiosResponse;
-
-  if (response.statusText === 'error') return null;
+  
+  if (response?.statusText === 'error') return null;
 
   if (response.headers['content-type'] !== 'text/javascript; charset=utf-8')
     return null;
@@ -99,11 +105,16 @@ export const fetchFromGraphQL = async (
     return null;
   }
 
+  const isVideoUrlValid = await checkVideoURL(data.video_url, httpService);
+
+  if (!isVideoUrlValid) return constants.errors.invalid_url;
+
   return {
     url: data.video_url,
     width: data.dimensions.width,
     height: data.dimensions.height,
     thumbnail: data.display_url,
     duration: data.video_duration,
+    downloadVia: InstaDownloaders.GRAPHQL,
   };
 };

@@ -14,3 +14,14 @@ export const startMsgBtnTextUk = 'Додати до групи'
 export const startMsgBtnTextEng = 'Add to group';
 export const footerBtnMsgUk = 'Без стиснення';
 export const footerBtnMsgEng = 'Without compression';
+
+export default {
+    defaultVideoInfo: {
+        width: 1080,
+        height: 1920,
+        duration: 0
+    },
+    errors: {
+        invalid_url: 'invalid_url'
+    }
+}

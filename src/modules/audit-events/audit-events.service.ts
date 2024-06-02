@@ -4,21 +4,27 @@ import { PrismaService } from '../../services/prisma.service';
 import { FilterOptions, SortOrder } from '../../types';
 import { getPaginationOptions, getSortOptions } from '../../utils/http';
 import { Prisma } from '@prisma/client';
+import { InstaDownloaders } from 'src/types/instagram';
 
 @Injectable()
 export class AuditEventsService {
   constructor(private prisma: PrismaService) {}
 
-  create(postUrl: string, chat: Chat, user: MessageFrom) {
-    const { title, type, id } = chat;
+  create(
+    postUrl: string,
+    chat: Chat,
+    user: MessageFrom,
+    downloadVia: InstaDownloaders,
+  ) {
+    const { title, id } = chat;
 
     return this.prisma.auditEvents.create({
       data: {
         postUrl,
         userTag: user.username,
         groupName: title,
-        groupType: type,
         groupId: String(id),
+        downloadService: downloadVia,
       },
     });
   }

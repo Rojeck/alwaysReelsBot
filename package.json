@@ -28,6 +28,8 @@
     "@nestjs/throttler": "^5.1.2",
     "@prisma/client": "^5.11.0",
     "axios": "^1.6.8",
+    "cheerio": "^1.0.0-rc.12",
+    "form-data": "^4.0.0",
     "jsonwebtoken": "^9.0.2",
     "nestjs-telegraf": "^2.7.0",
     "passport": "^0.7.0",
