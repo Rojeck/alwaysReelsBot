@@ -1,12 +1,11 @@
 import { BadRequestException } from '@nestjs/common';
+import { servicesPatterns } from 'src/constants';
+import { VideoService } from 'src/types';
 
-const REEL_REGEX =
-  /^https:\/\/(?:www\.)?instagram\.com\/reels?\/([a-zA-Z0-9_-]+)\/?/;
+const reelsCheck = (url: string): RegExpMatchArray | null =>
+  url.match(servicesPatterns[VideoService.IG]);
 
-export const reelsCheck = (url: string): RegExpMatchArray | null =>
-  url.match(REEL_REGEX);
-
-export const getPostId = (postUrl: string) => {
+export function getPostId(postUrl: string) {
   let postId: string;
   const reelCheck = reelsCheck(postUrl);
 
@@ -19,4 +18,4 @@ export const getPostId = (postUrl: string) => {
   }
 
   return postId;
-};
+}

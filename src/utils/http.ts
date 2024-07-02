@@ -1,29 +1,21 @@
-import {
-  PaginationOptions,
-  QueryOptions,
-  SortOptions,
-  SortOrder,
-} from '../types';
+import { PaginationOptions, QueryOptions, SortOrder } from '../types';
 
-export const getPaginationOptions = (
+export function getPaginationOptions(
   page = '1',
   perPage = '300',
-): PaginationOptions => {
+): PaginationOptions {
   return { take: +perPage, skip: (+page - 1) * +perPage };
-};
+}
 
-export const getSortOptions = (
-  field: string,
-  order: SortOrder,
-): SortOptions => {
-  if (!(field || order)) {
-    return {};
-  }
+export function getSortOptions(
+  sortField = 'createdAt',
+  sortOrder: SortOrder,
+): { [key: string]: 1 | -1 } {
+  const sortDirection = sortOrder === SortOrder.ASC ? 1 : -1;
+  return { [sortField]: sortDirection };
+}
 
-  return { orderBy: { [field]: order } };
-};
-
-export const extractSearchOptions = (query: QueryOptions) => {
+export function extractSearchOptions(query: QueryOptions) {
   const searchBy = Object.keys(query)
     .find((key) => key.startsWith('$'))
     ?.slice(1);
@@ -34,4 +26,4 @@ export const extractSearchOptions = (query: QueryOptions) => {
   }
 
   return { searchBy, searchValue };
-};
+}

@@ -1,70 +1,59 @@
-import { Ctx, On, Update, Start } from 'nestjs-telegraf';
+import { Ctx, On, Update, Start, Action } from 'nestjs-telegraf';
 import { SceneContext } from 'telegraf/typings/scenes';
-import { NotificationService } from '../../services/notification.service';
-import { InstagramService } from '../../services/instagram/instagram.service';
-import { TgTextMessage } from '../../types/telegram';
-import { AuditEventsService } from '../audit-events/audit-events.service';
 import { ConfigService } from '@nestjs/config';
-import { reelsCheck } from '../../utils/instagram';
 import { UseGuards } from '@nestjs/common';
-import { TgMsgThrottlerGuard } from '../../common/guards/TgMsgThrottler.guard';
+import { TgMsgThrottlerGuard } from '../../common/guards';
 import {
-  footerBtnMsgEng,
-  footerBtnMsgUk,
-  startMsgBtnTextEng,
-  startMsgBtnTextUk,
-  startMsgEng,
-  startMsgUk,
-} from '../../constants';
-import axios from 'axios';
+  ChatMemberStatus,
+  ChatMemberUpdate,
+  TgTextMessage,
+  VideoService,
+} from '../../types';
+import { GroupsService } from '../groups/groups.service';
+import { UsersService } from '../users/users.service';
+import { InstagramService } from '../download/instagram.service';
+import { TelegramService } from './telegram.service';
+import { MessagesService } from '../messages/messages.service';
+import { identifyVideoService, strToBoolean } from 'src/utils';
+import { DownloadService } from '../download/download.service';
 
 type Context = SceneContext;
 
 @Update()
 export class TelegramUpdate {
+  private isStartNotificationEnabled: boolean;
+  private videoServices: { [key in VideoService]: DownloadService };
+
   constructor(
-    private readonly auditEventsService: AuditEventsService,
     private readonly instagramService: InstagramService,
-    private readonly notificationService: NotificationService,
     private readonly config: ConfigService,
-  ) {}
+    private readonly groupsService: GroupsService,
+    private readonly usersService: UsersService,
+    private readonly telegramService: TelegramService,
+    private readonly messagesService: MessagesService,
+  ) {
+    this.isStartNotificationEnabled = strToBoolean(
+      this.config.get('ENABLE_NOTIFICATION_ON_START'),
+    );
+    this.videoServices = {
+      [VideoService.IG]: this.instagramService,
+    };
+  }
 
   @Start()
   async onStart(@Ctx() ctx: Context) {
-    const isStartNotificationEnabled = this.config.get(
-      'ENABLE_NOTIFICATION_ON_START',
-    );
-    const { from, chat } = (ctx.update as any)?.message as TgTextMessage;
+    const { from, chat } = ctx.update['message'] as TgTextMessage;
 
     // prohibit start in another chat, except chat with a bot
     if (from.id !== chat.id) {
       return;
     }
 
-    const startMessage = from.language_code === 'uk' ? startMsgUk : startMsgEng;
-    const buttonText =
-      from.language_code === 'uk' ? startMsgBtnTextUk : startMsgBtnTextEng;
+    void this.telegramService.sendStartMessage(ctx);
+    await this.usersService.createOrFindOne(from);
 
-    await ctx.replyWithHTML(startMessage, {
-      reply_markup: {
-        inline_keyboard: [
-          [
-            {
-              text: buttonText,
-              url: 'https://t.me/AlwaysReels_bot?startgroup',
-            },
-          ],
-        ],
-      },
-    });
-
-    if (isStartNotificationEnabled) {
-      void this.notificationService.sendNotification(
-        this.config.get('OWNER_TG_ID'),
-        `NOTIFICATION: Somebody called /start.
-       Name: ${ctx.from.first_name}, 
-       Tag: ${ctx.from.username}`,
-      );
+    if (this.isStartNotificationEnabled) {
+      void this.telegramService.sendStartNotiffication(ctx);
     }
   }
 
@@ -72,72 +61,48 @@ export class TelegramUpdate {
   @UseGuards(TgMsgThrottlerGuard)
   async onTextMessage(@Ctx() ctx: Context) {
     const message = ctx.message as unknown as TgTextMessage;
-    const { text: messageText, from, chat } = message;
-    let footer = {};
+    const { text } = message;
+    const videoService = identifyVideoService(text);
 
-    if (!reelsCheck(messageText)) {
+    if (!videoService) {
       return;
     }
 
-    const isBotChat = from.id === chat.id;
-    const videoInfo = await this.instagramService.fetchPostJSON(messageText);
-    const buttonText =
-      from.language_code === 'uk' ? footerBtnMsgUk : footerBtnMsgEng;
-
-    if (isBotChat) {
-      footer = {
-        reply_markup: {
-          inline_keyboard: [
-            [
-              {
-                text: buttonText,
-                url: videoInfo.url,
-              },
-            ],
-          ],
-        },
-      };
-    } else {
-      footer = {
-        caption: `<b>From:</b> @${
-          from.username || from.first_name
-        }  \n<b>Original</b>: <a href="${messageText}">Link</a>`,
-      };
-    }
-
-    await ctx
-      .replyWithVideo(videoInfo.url, {
-        parse_mode: 'HTML',
-        ...footer,
-      })
-      .catch(async () => {
-        const response = await axios.get(videoInfo.url, {
-          responseType: 'stream',
-        });
-        const { data: thumbnail } = await axios.get(videoInfo.thumbnail, {
-          responseType: 'stream',
-        });
-
-        await ctx.replyWithVideo(
-          { source: response.data },
-          {
-            thumbnail: {
-              source: thumbnail,
-            },
-            width: videoInfo.width,
-            height: videoInfo.height,
-            duration: videoInfo.duration,
-            ...footer,
-            parse_mode: 'HTML',
-          },
-        );
-      });
-
-    await this.auditEventsService.create(
-      messageText,
-      chat,
-      from,
-      videoInfo.downloadVia,
+    await this.telegramService.handleVideo(
+      ctx,
+      this.videoServices[videoService],
     );
+  }
+
+  @On('my_chat_member')
+  async onChatMember(@Ctx() ctx: Context) {
+    const {
+      chat,
+      new_chat_member: { status },
+      from,
+    } = ctx.update['my_chat_member'] as ChatMemberUpdate;
+    const isPrivate = chat.type === 'private';
+    const isMember = status === ChatMemberStatus.MEMBER;
+    const isLeft =
+      status === ChatMemberStatus.LEFT || status === ChatMemberStatus.KICKED;
+
+    if (isPrivate) {
+      if (isMember) {
+        await this.usersService.createOrFindOne(from);
+      } else if (isLeft) {
+        await this.usersService.removeByUserId(from.id);
+      }
+    } else {
+      if (isMember) {
+        this.groupsService.createOrFindOne(chat, from);
+      } else if (isLeft) {
+        await this.groupsService.removeByGroupId(chat.id);
+      }
+    }
+  }
+
+  @Action(/^message_job.*/)
+  async onMessageJobAction(@Ctx() ctx: Context) {
+    void this.messagesService.handleMessageJobAction(ctx);
   }
 }

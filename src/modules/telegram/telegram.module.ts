@@ -1,16 +1,14 @@
 import { Module } from '@nestjs/common';
-import { TelegramUpdate } from './telegram.update';
 import { TelegrafModule } from 'nestjs-telegraf';
-import options from './telegram-config.factory';
-import { PrismaService } from '../../services/prisma.service';
-import { NotificationService } from '../../services/notification.service';
-import { LoggerService } from '../../services/logger.service';
-import { ConfigService } from '@nestjs/config';
-import { InstagramService } from '../../services/instagram/instagram.service';
-import { HttpModule } from '@nestjs/axios';
-import { AuditEventsModule } from '../audit-events/audit-events.module';
-import { AuditEventsService } from '../audit-events/audit-events.service';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { AuditEventsModule } from '../audit-events/audit-events.module';
+import { GroupsModule } from '../groups/groups.module';
+import { UsersModule } from '../users/users.module';
+import { MessagesModule } from '../messages/messages.module';
+import { DownloadModule } from '../download/download.module';
+import { options } from './telegram-config.factory';
+import { TelegramUpdate } from './telegram.update';
+import { TelegramService } from './telegram.service';
 
 @Module({
   imports: [
@@ -27,17 +25,12 @@ import { ThrottlerModule } from '@nestjs/throttler';
       },
     ]),
     TelegrafModule.forRootAsync(options()),
-    HttpModule,
     AuditEventsModule,
+    MessagesModule,
+    GroupsModule,
+    UsersModule,
+    DownloadModule,
   ],
-  providers: [
-    TelegramUpdate,
-    InstagramService,
-    PrismaService,
-    AuditEventsService,
-    NotificationService,
-    LoggerService,
-    ConfigService,
-  ],
+  providers: [TelegramUpdate, TelegramService],
 })
 export class TelegramModule {}

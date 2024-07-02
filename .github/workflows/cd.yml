@@ -22,6 +22,5 @@ jobs:
             cd ${{ secrets.PROJECT_PATH}} &&
             git pull origin main &&
             yarn &&
-            yarn prisma migrate deploy &&
             yarn build
             pm2 restart ${{ secrets.PM2_PROCESS }}

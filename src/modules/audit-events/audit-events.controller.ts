@@ -6,22 +6,22 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { AuditEventsService } from './audit-events.service';
-import { QueryOptions } from '../../types';
-import { extractSearchOptions } from '../../utils/http';
 import { AuthGuard } from '@nestjs/passport';
+import { QueryOptions } from '../../types';
+import { extractSearchOptions } from '../../utils';
+import { AuditEventsService } from './audit-events.service';
 
+@UseGuards(AuthGuard('jwt'))
 @Controller('audit-events')
 export class AuditEventsController {
   constructor(private readonly auditEventsService: AuditEventsService) {}
 
-  @UseGuards(AuthGuard('jwt'))
   @Get()
-  findAll(@Query() query: QueryOptions) {
+  findMany(@Query() query: QueryOptions) {
     const { page, perPage, sortField, sortOrder, ...filterOptions } = query;
     const { searchBy, searchValue } = extractSearchOptions(filterOptions);
 
-    return this.auditEventsService.findAll(
+    return this.auditEventsService.findMany(
       page,
       perPage,
       searchBy,
@@ -32,9 +32,8 @@ export class AuditEventsController {
     );
   }
 
-  @UseGuards(AuthGuard('jwt'))
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.auditEventsService.remove(+id);
+    return this.auditEventsService.remove(id);
   }
 }
