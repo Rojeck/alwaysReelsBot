@@ -1,35 +1,56 @@
-import { Injectable } from '@nestjs/common';
-import { Chat, MessageFrom } from '../../types/telegram';
-import { PrismaService } from '../../services/prisma.service';
-import { FilterOptions, SortOrder } from '../../types';
-import { getPaginationOptions, getSortOptions } from '../../utils/http';
-import { Prisma } from '@prisma/client';
-import { InstaDownloaders } from 'src/types/instagram';
+import { Inject, Injectable } from '@nestjs/common';
+import { Model } from 'mongoose';
+import { ConfigService } from '@nestjs/config';
+import {
+  createZipBuffer,
+  getPaginationOptions,
+  getSortOptions,
+} from '../../utils';
+import {
+  Chat,
+  FilterOptions,
+  InstaDownloaders,
+  MessageFrom,
+  SortOrder,
+  VideoService,
+} from '../../types';
+import { AUDIT_EVENTS_MODEL } from './audit-events.providers';
+import { AuditEvents } from './audit-events.schema';
+import { MessagesService } from '../messages/messages.service';
 
 @Injectable()
 export class AuditEventsService {
-  constructor(private prisma: PrismaService) {}
+  private ownerId: string;
+  private auditEventsCleanOn: number;
 
-  create(
-    postUrl: string,
-    chat: Chat,
-    user: MessageFrom,
-    downloadVia: InstaDownloaders,
+  constructor(
+    @Inject(AUDIT_EVENTS_MODEL)
+    private auditEvents: Model<AuditEvents>,
+    private messageService: MessagesService,
+    private config: ConfigService,
   ) {
-    const { title, id } = chat;
-
-    return this.prisma.auditEvents.create({
-      data: {
-        postUrl,
-        userTag: user.username,
-        groupName: title,
-        groupId: String(id),
-        downloadService: downloadVia,
-      },
-    });
+    this.ownerId = this.config.get('OWNER_TG_ID');
+    this.auditEventsCleanOn = Number(this.config.get('AUDIT_EVENTS_CLEAN_ON'));
   }
 
-  async findAll(
+  create(
+    chat: Chat,
+    user: MessageFrom,
+    downloadedVia: InstaDownloaders,
+    service: VideoService,
+  ) {
+    const { id } = chat;
+
+    const newAuditEvent = new this.auditEvents({
+      groupId: String(id),
+      downloadedVia,
+      service,
+    });
+
+    return newAuditEvent.save();
+  }
+
+  async findMany(
     page: string,
     perPage: string,
     searchBy: string,
@@ -38,35 +59,53 @@ export class AuditEventsService {
     sortOrder: SortOrder,
     filterOptions: FilterOptions,
   ) {
-    const whereCondition = searchBy
+    const query = searchBy
       ? {
           ...filterOptions,
-          [searchBy]: {
-            contains: searchValue,
-            mode: Prisma.QueryMode.insensitive,
-          },
+          [searchBy]: { $regex: searchValue, $options: 'i' },
         }
       : filterOptions;
 
-    const countPromise = this.prisma.auditEvents.count({
-      where: whereCondition,
-    });
-    const dataPromise = this.prisma.auditEvents.findMany({
-      where: whereCondition,
-      ...getPaginationOptions(page, perPage),
-      ...getSortOptions(sortField, sortOrder),
-    });
+    const { take, skip } = getPaginationOptions(page, perPage);
+    const sortOptions = getSortOptions(sortField, sortOrder);
 
-    const [data, total] = await Promise.all([dataPromise, countPromise]);
+    const [data, total] = await Promise.all([
+      this.auditEvents
+        .find(query)
+        .sort(sortOptions)
+        .skip(skip)
+        .limit(take)
+        .exec(),
+      this.auditEvents.countDocuments(query).exec(),
+    ]);
 
     return { data, total };
   }
 
-  remove(id: number) {
-    return this.prisma.auditEvents.delete({
-      where: {
-        id,
-      },
+  remove(id: string) {
+    return this.auditEvents.findByIdAndDelete(id).exec();
+  }
+
+  async processCleanAuditEvents(): Promise<void> {
+    const count = await this.auditEvents.countDocuments().exec();
+
+    if (!this.auditEventsCleanOn || count < this.auditEventsCleanOn) {
+      return;
+    }
+
+    const date = new Date().toISOString();
+    const data = await this.auditEvents.find().lean().exec();
+
+    const bufferData = data.map((item) => JSON.stringify(item)).join('\n');
+    const buffer = Buffer.from(bufferData, 'utf-8');
+    const document = { name: `${date}.txt`, buffer };
+    const zip = createZipBuffer([document]);
+
+    await this.messageService.sendFile(this.ownerId, {
+      name: 'analytics.zip',
+      buffer: zip,
     });
+
+    await this.auditEvents.collection.drop();
   }
 }

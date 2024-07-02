@@ -1,16 +1,26 @@
-version: "3.9"
+version: '3.9'
+
 services:
-  postgres:
-    container_name: ARB_pg_container
-    image: postgres:14.8-alpine3.18
-    environment:
-      POSTGRES_DB: "arb"
-      POSTGRES_USER: "postgres"
-      POSTGRES_PASSWORD: "arb"
-    volumes:
-      - arbdata:/var/lib/postgresql/volumes/data
+  redis:
+    image: redis:latest
     ports:
-      - "5432:5432"
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME:
+      MONGO_INITDB_ROOT_PASSWORD:
+      MONGO_INITDB_DATABASE: arb
 
 volumes:
-  arbdata:
+  redis-data:
+  mongodb_data:
+    driver: local

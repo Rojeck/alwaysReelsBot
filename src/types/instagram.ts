@@ -154,12 +154,3 @@ export enum InstaDownloaders {
   SNAPINSTA = 'snapinsta',
   SAVEFROM = 'savefrom',
 }
-
-export interface VideoInfo {
-  url: string;
-  width: number;
-  height: number;
-  thumbnail: string;
-  duration: number;
-  downloadVia: InstaDownloaders;
-}

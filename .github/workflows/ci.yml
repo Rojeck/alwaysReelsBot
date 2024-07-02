@@ -18,24 +18,8 @@ jobs:
       - name: Yarn lint
         run: yarn lint
 
-  check_database:
-    needs: install_deps_and_lint
-    runs-on: ubuntu-latest
-
-    env:
-      DATABASE_URL: "postgresql://postgres:arb@localhost:5432/arb?schema=public"
-
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Start database container
-        run: yarn service up -d
-
-      - name: Migrate database
-        run: npx prisma migrate deploy
-
   build:
-    needs: check_database
+    needs: install_deps_and_lint
     runs-on: ubuntu-latest
 
     steps:

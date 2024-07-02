@@ -4,23 +4,28 @@ import {
   HttpStatus,
   HttpException,
 } from '@nestjs/common';
-import { LoggerService } from '../../services/logger.service';
-import { NotificationService } from '../../services/notification.service';
-import { TgTextMessage } from '../../types/telegram';
 import { ConfigService } from '@nestjs/config';
 import { Request, Response } from 'express';
 import {
   ICustomHttpExceptionResponse,
   IHttpExceptionResponse,
+  TgTextMessage,
 } from '../../types';
+import { MessagesService } from 'src/modules/messages/messages.service';
+import { LoggerService } from 'src/modules/logger/logger.service';
+import { getMessage } from 'src/utils';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
+  private ownerId: string;
+
   constructor(
     private logger: LoggerService,
-    private notificationService: NotificationService,
+    private messagesService: MessagesService,
     private config: ConfigService,
-  ) {}
+  ) {
+    this.ownerId = this.config.get('OWNER_TG_ID');
+  }
 
   catch(exception: any, host: any) {
     this.logger.error(exception);
@@ -30,17 +35,9 @@ export class AllExceptionsFilter implements ExceptionFilter {
       const { from, chat, text } = host.switchToRpc().getData().update
         .message as TgTextMessage;
 
-      void this.notificationService.sendNotification(
-        this.config.get('OWNER_TG_ID'),
-        `ERROR: telegram error, exception: ${exception},
-        <b>HostInfo</b>: 
-        userName - ${from.first_name}, 
-        userTag ${from.username},
-        userId: ${from.id}, 
-        chatName: ${chat.title}, 
-        chatId: ${chat.id},
-        chatType: ${chat.type},
-        messageText: ${text}`,
+      void this.messagesService.sendMessage(
+        this.ownerId,
+        getMessage('errorNotification')(chat, from, text, exception),
       );
 
       return;

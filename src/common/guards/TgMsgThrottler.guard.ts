@@ -4,8 +4,8 @@ import {
   ThrottlerOptions,
 } from '@nestjs/throttler';
 import { ExecutionContext, Injectable } from '@nestjs/common';
-import { TgTextMessage } from '../../types/telegram';
-import { reelsCheck } from '../../utils/instagram';
+import { TgTextMessage } from '../../types';
+import { identifyVideoService } from 'src/utils';
 
 @Injectable()
 export class TgMsgThrottlerGuard extends ThrottlerGuard {
@@ -18,7 +18,7 @@ export class TgMsgThrottlerGuard extends ThrottlerGuard {
     const data = context.switchToRpc().getData().update
       .message as TgTextMessage;
 
-    if (!reelsCheck(data.text)) {
+    if (!identifyVideoService(data.text)) {
       return true;
     }
 
