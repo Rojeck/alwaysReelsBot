@@ -33,7 +33,7 @@ export class InstagramService extends DownloadService {
   }
 
   async fetchPost(postURL: string): Promise<VideoInfo | null> {
-    const postId = getPostId(postURL);
+    const postId = getPostId(postURL, VideoService.IG);
     const cacheKey = `${VideoService.IG}:${postId}`;
     let result = null;
 

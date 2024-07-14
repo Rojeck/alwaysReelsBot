@@ -1,6 +1,12 @@
 version: '3.9'
 
 services:
+  python:
+    image: python:3.9-slim
+    container_name: python_service
+    stdin_open: true
+    tty: true
+
   redis:
     image: redis:latest
     ports:
