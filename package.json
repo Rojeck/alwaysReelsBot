@@ -42,7 +42,8 @@
     "query-string": "6.0.0",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.2.0",
-    "telegraf": "^4.15.2"
+    "telegraf": "^4.15.2",
+    "youtube-dl-exec": "^3.0.6"
   },
   "devDependencies": {
     "@nestjs/cli": "^9.0.0",

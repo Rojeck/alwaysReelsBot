@@ -1,7 +1,8 @@
-import { InstaDownloaders } from '.';
+import { InstaDownloaders, YTDownloaders } from '.';
 
 export enum VideoService {
   IG = 'instagram',
+  YT = 'youtube',
 }
 
 export interface VideoInfo {
@@ -11,5 +12,5 @@ export interface VideoInfo {
   thumbnail: string;
   duration: number;
   service: VideoService;
-  downloadVia: InstaDownloaders;
+  downloadVia: InstaDownloaders | YTDownloaders;
 }

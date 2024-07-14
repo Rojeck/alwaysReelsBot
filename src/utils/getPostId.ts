@@ -2,12 +2,14 @@ import { BadRequestException } from '@nestjs/common';
 import { servicesPatterns } from 'src/constants';
 import { VideoService } from 'src/types';
 
-const reelsCheck = (url: string): RegExpMatchArray | null =>
-  url.match(servicesPatterns[VideoService.IG]);
+const urlCheck = (
+  url: string,
+  service: VideoService,
+): RegExpMatchArray | null => url.match(servicesPatterns[service]);
 
-export function getPostId(postUrl: string) {
+export function getPostId(postUrl: string, service: VideoService) {
   let postId: string;
-  const reelCheck = reelsCheck(postUrl);
+  const reelCheck = urlCheck(postUrl, service);
 
   if (reelCheck) {
     postId = reelCheck.at(-1);

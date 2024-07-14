@@ -13,6 +13,7 @@ import {
   MessageFrom,
   SortOrder,
   VideoService,
+  YTDownloaders,
 } from '../../types';
 import { AUDIT_EVENTS_MODEL } from './audit-events.providers';
 import { AuditEvents } from './audit-events.schema';
@@ -36,7 +37,7 @@ export class AuditEventsService {
   create(
     chat: Chat,
     user: MessageFrom,
-    downloadedVia: InstaDownloaders,
+    downloadedVia: InstaDownloaders | YTDownloaders,
     service: VideoService,
   ) {
     const { id } = chat;
