@@ -13,6 +13,7 @@ export const fetchFromSnapInsta = async (
 ): Promise<VideoInfo | null | string> => {
   const form = new FormData();
   form.append('t', 'media');
+  form.append('lang', 'ru');
   form.append('q', `https://www.instagram.com/reels/${postId}`);
 
   const response = (await lastValueFrom(
@@ -32,10 +33,8 @@ export const fetchFromSnapInsta = async (
   if (!response.data.data) return null;
 
   const $ = load(response.data.data);
-  const video_url = $(
-    'a.abutton.is-success.is-fullwidth.btn-premium.mt-3',
-  ).attr('href');
-  const thumbnail = $('img').attr('src');
+  const thumbnail = $('.download-items__thumb img').attr('src');
+  const video_url = $('.download-items__btn a').attr('href');
 
   if (!video_url || !thumbnail) {
     return null;
