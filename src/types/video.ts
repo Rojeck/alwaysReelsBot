@@ -1,8 +1,10 @@
 import { InstaDownloaders, YTDownloaders } from '.';
+import { TikTokDownloaders } from './tiktok';
 
 export enum VideoService {
   IG = 'instagram',
   YT = 'youtube',
+  TT = 'tiktok',
 }
 
 export interface VideoInfo {
@@ -12,5 +14,6 @@ export interface VideoInfo {
   thumbnail?: string;
   duration: number;
   service: VideoService;
-  downloadVia: InstaDownloaders | YTDownloaders;
+  useStream?: boolean;
+  downloadVia: InstaDownloaders | YTDownloaders | TikTokDownloaders;
 }

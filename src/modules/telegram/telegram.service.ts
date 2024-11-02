@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import axios from 'axios';
 import { TgTextMessage, VideoInfo } from 'src/types';
 import { Context } from 'telegraf';
@@ -7,7 +7,6 @@ import { ConfigService } from '@nestjs/config';
 import { getMessage } from 'src/utils';
 import { AuditEventsService } from '../audit-events/audit-events.service';
 import { DownloadService } from '../download/download.service';
-import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
 
 @Injectable()
 export class TelegramService {
@@ -15,7 +14,6 @@ export class TelegramService {
   private botName: string;
 
   constructor(
-    @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private readonly messageService: MessagesService,
     private readonly config: ConfigService,
     private readonly auditEventsService: AuditEventsService,
@@ -91,13 +89,17 @@ export class TelegramService {
   }
 
   async replyWithVideo(ctx: Context, videoInfo: VideoInfo, footer: any) {
-    try {
-      await ctx.replyWithVideo(videoInfo.url, {
-        parse_mode: 'HTML',
-        ...footer,
-      });
-    } catch {
-      const response = await axios.get(videoInfo.url, {
+    const {
+      useStream,
+      url,
+      thumbnail: thumbnailUrl,
+      width,
+      height,
+      duration,
+    } = videoInfo;
+
+    const sendVideoStream = async () => {
+      const response = await axios.get(url, {
         responseType: 'stream',
       });
       let thumbnail;
@@ -126,6 +128,19 @@ export class TelegramService {
           parse_mode: 'HTML',
         },
       );
+    };
+
+    if (useStream) {
+      await sendVideoStream();
+    } else {
+      try {
+        await ctx.replyWithVideo(url, {
+          parse_mode: 'HTML',
+          ...footer,
+        });
+      } catch {
+        await sendVideoStream();
+      }
     }
   }
 }

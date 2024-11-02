@@ -5,19 +5,25 @@ import { ConfigService } from '@nestjs/config';
 import { VideoInfo, VideoService } from 'src/types';
 import { getPostId, strToBoolean } from 'src/utils';
 import { DownloadService } from '../download.service';
-import { fetchFromYoutubeDl } from './scrappers';
+import { fetchFromHighPerform, fetchFromYoutubeDl } from './scrappers';
+import { HttpService } from '@nestjs/axios';
 
 @Injectable()
 export class YouTubeService extends DownloadService {
   private ytDisableYouTubeDl: boolean;
+  private ytDisableHighPerform: boolean;
 
   constructor(
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private config: ConfigService,
+    private httpService: HttpService,
   ) {
     super();
     this.ytDisableYouTubeDl = strToBoolean(
       this.config.get('YT_DISABLE_YOUTUBEDL'),
+    );
+    this.ytDisableHighPerform = strToBoolean(
+      this.config.get('YT_DISABLE_HIGH_PERFORM'),
     );
   }
 
@@ -32,6 +38,10 @@ export class YouTubeService extends DownloadService {
 
     if (!this.ytDisableYouTubeDl) {
       result = await fetchFromYoutubeDl(postId);
+    }
+
+    if (!this.ytDisableHighPerform) {
+      result = await fetchFromHighPerform(postId, this.httpService);
     }
 
     if (result) {

@@ -17,6 +17,7 @@ import { MessagesService } from '../messages/messages.service';
 import { identifyVideoService, strToBoolean } from 'src/utils';
 import { DownloadService } from '../download/download.service';
 import { YouTubeService } from '../download/youtube.service';
+import { TikTokService } from '../download/tiktok.service';
 
 type Context = SceneContext;
 
@@ -28,6 +29,7 @@ export class TelegramUpdate {
   constructor(
     private readonly instagramService: InstagramService,
     private readonly youTubeService: YouTubeService,
+    private readonly tikTokService: TikTokService,
     private readonly config: ConfigService,
     private readonly groupsService: GroupsService,
     private readonly usersService: UsersService,
@@ -40,6 +42,7 @@ export class TelegramUpdate {
     this.videoServices = {
       [VideoService.IG]: this.instagramService,
       [VideoService.YT]: this.youTubeService,
+      [VideoService.TT]: this.tikTokService,
     };
   }
 
