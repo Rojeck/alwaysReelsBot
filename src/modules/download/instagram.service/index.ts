@@ -2,20 +2,17 @@ import { Inject, Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
 import { ConfigService } from '@nestjs/config';
-import {
-  fetchFromSaveFrom,
-  fetchFromSnapInsta,
-  fetchFromGraphQL,
-} from './scrappers';
+import { fetchFromPubler, fetchFromGraphQL } from './scrappers';
 import { VideoInfo, VideoService } from 'src/types';
 import { getPostId, strToBoolean } from 'src/utils';
 import { DownloadService } from '../download.service';
+import { fetchFromRapidAPI } from './scrappers/rapidApi';
 
 @Injectable()
 export class InstagramService extends DownloadService {
-  private igDisableSaveFrom: boolean;
-  private igDisableSnapInsta: boolean;
+  private igDisablePubler: boolean;
   private igDisableGraphQL: boolean;
+  private igDisableRapidAPI: boolean;
 
   constructor(
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
@@ -23,13 +20,11 @@ export class InstagramService extends DownloadService {
     private config: ConfigService,
   ) {
     super();
-    this.igDisableSaveFrom = strToBoolean(
-      this.config.get('IG_DISABLE_SAVE_FROM'),
-    );
-    this.igDisableSnapInsta = strToBoolean(
-      this.config.get('IG_DISABLE_SNAP_INSTA'),
-    );
+    this.igDisablePubler = strToBoolean(this.config.get('IG_DISABLE_PUBLER'));
     this.igDisableGraphQL = strToBoolean(this.config.get('IG_DISABLE_GRAPHQL'));
+    this.igDisableRapidAPI = strToBoolean(
+      this.config.get('IG_DISABLE_RAPID_API'),
+    );
   }
 
   async fetchPost(postURL: string): Promise<VideoInfo | null> {
@@ -45,12 +40,12 @@ export class InstagramService extends DownloadService {
       result = await fetchFromGraphQL(postId, this.httpService);
     }
 
-    if (!result && !this.igDisableSnapInsta) {
-      result = await fetchFromSnapInsta(postId, this.httpService);
+    if (!result && !this.igDisablePubler) {
+      result = await fetchFromPubler(postId, this.httpService);
     }
 
-    if (!result && !this.igDisableSaveFrom) {
-      result = await fetchFromSaveFrom(postId, this.httpService);
+    if (!result && !this.igDisableRapidAPI) {
+      result = await fetchFromRapidAPI(postId, this.httpService);
     }
 
     if (result) {

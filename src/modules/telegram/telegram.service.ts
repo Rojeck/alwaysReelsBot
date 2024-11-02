@@ -100,16 +100,25 @@ export class TelegramService {
       const response = await axios.get(videoInfo.url, {
         responseType: 'stream',
       });
-      const { data: thumbnail } = await axios.get(videoInfo.thumbnail, {
-        responseType: 'stream',
-      });
+      let thumbnail;
+
+      if (videoInfo.thumbnail) {
+        const { data } = await axios.get(videoInfo.thumbnail, {
+          responseType: 'stream',
+        });
+        thumbnail = data;
+      }
 
       await ctx.replyWithVideo(
         { source: response.data },
         {
-          thumbnail: {
-            source: thumbnail,
-          },
+          ...(thumbnail
+            ? {
+                thumbnail: {
+                  source: thumbnail,
+                },
+              }
+            : {}),
           width: videoInfo.width,
           height: videoInfo.height,
           duration: videoInfo.duration,

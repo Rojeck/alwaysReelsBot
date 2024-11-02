@@ -4,8 +4,10 @@ import { youtubeDl } from 'youtube-dl-exec';
 export async function fetchFromYoutubeDl(
   postId: string,
 ): Promise<VideoInfo | null> {
+  const proxyUrl = process.env.PROXY_URL;
   const result = await youtubeDl(`https://www.youtube.com/shorts/${postId}`, {
     format: 'best',
+    proxy: proxyUrl,
     dumpSingleJson: true,
     mergeOutputFormat: 'mp4',
     noWarnings: true,

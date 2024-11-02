@@ -63,11 +63,12 @@ export class TelegramUpdate {
   @On('text')
   @UseGuards(TgMsgThrottlerGuard)
   async onTextMessage(@Ctx() ctx: Context) {
+    const disable = process.env.DISABLE;
     const message = ctx.message as unknown as TgTextMessage;
     const { text } = message;
     const videoService = identifyVideoService(text);
 
-    if (!videoService) {
+    if (!videoService || disable) {
       return;
     }
 

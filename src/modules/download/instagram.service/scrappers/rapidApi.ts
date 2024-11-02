@@ -4,21 +4,18 @@ import { catchError, lastValueFrom, of } from 'rxjs';
 import { AxiosResponse } from 'axios';
 import { defaultVideoInfo } from 'src/constants';
 
-export const fetchFromSaveFrom = async (
+export const fetchFromRapidAPI = async (
   postId: string,
   httpService: HttpService,
 ): Promise<VideoInfo | null> => {
   const response = (await lastValueFrom(
     httpService
       .request({
-        url: process.env.SAVE_FROM_URL,
-        method: 'POST',
+        url: `${process.env.RAPID_API_URL}?code_or_id_or_url=${postId}`,
+        method: 'GET',
         headers: {
-          'x-rapidapi-key': process.env.SAVE_FROM_KEY,
-          'x-rapidapi-host': process.env.SAVE_FROM_HOST,
-        },
-        data: {
-          url: `https://www.instagram.com/reels/${postId}`,
+          'x-rapidapi-key': process.env.RAPID_API_KEY,
+          'x-rapidapi-host': process.env.RAPID_API_HOST,
         },
       })
       .pipe(
@@ -30,17 +27,15 @@ export const fetchFromSaveFrom = async (
 
   if (!response?.data) return null;
 
-  const data = response.data[0];
-  const videoLink = data.urls[0].url;
-  const thumbnail = data.pictureUrl;
+  const { thumbnail_url, video_url, video_duration } = response.data.data;
 
   return {
-    url: videoLink,
+    url: video_url,
     width: defaultVideoInfo.width,
     height: defaultVideoInfo.height,
-    thumbnail,
+    thumbnail: thumbnail_url,
     service: VideoService.IG,
-    duration: defaultVideoInfo.duration,
-    downloadVia: InstaDownloaders.SAVEFROM,
-  };
+    duration: video_duration,
+    downloadVia: InstaDownloaders.RAPID_API,
+  } as VideoInfo;
 };
