@@ -1,6 +1,12 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Model } from 'mongoose';
-import { FilterOptions, SortOrder, Chat, MessageFrom } from 'src/types';
+import {
+  FilterOptions,
+  SortOrder,
+  Chat,
+  MessageFrom,
+  VideoService,
+} from 'src/types';
 import { getPaginationOptions, getSortOptions } from 'src/utils';
 import { GROUPS_MODEL } from './groups.providers';
 import { Groups } from './groups.schema';
@@ -43,7 +49,7 @@ export class GroupsService {
     return { data, total };
   }
 
-  private findOneByGroupId(groupId: string) {
+  async findOneByGroupId(groupId: string) {
     return this.groups.findOne({ groupId }).exec();
   }
 
@@ -65,5 +71,12 @@ export class GroupsService {
 
   removeByGroupId(groupId: number) {
     return this.groups.findOneAndDelete({ groupId });
+  }
+
+  async toggleService(groupId: string, service: VideoService) {
+    const group = await this.findOneByGroupId(groupId);
+
+    group.disabledServices[service] = !group.disabledServices[service];
+    return group.save();
   }
 }

@@ -1,11 +1,12 @@
-import { Ctx, On, Update, Start, Action } from 'nestjs-telegraf';
+import { Ctx, On, Update, Start, Action, Command } from 'nestjs-telegraf';
 import { SceneContext } from 'telegraf/typings/scenes';
 import { ConfigService } from '@nestjs/config';
 import { UseGuards } from '@nestjs/common';
-import { TgMsgThrottlerGuard } from '../../common/guards';
+import { TgThrottlerGuard, TgMsgThrottlerGuard } from '../../common/guards';
 import {
   ChatMemberStatus,
   ChatMemberUpdate,
+  TgAction,
   TgTextMessage,
   VideoService,
 } from '../../types';
@@ -14,10 +15,12 @@ import { UsersService } from '../users/users.service';
 import { InstagramService } from '../download/instagram.service';
 import { TelegramService } from './telegram.service';
 import { MessagesService } from '../messages/messages.service';
-import { identifyVideoService, strToBoolean } from 'src/utils';
+import { getMessage, identifyVideoService, strToBoolean } from 'src/utils';
 import { DownloadService } from '../download/download.service';
 import { YouTubeService } from '../download/youtube.service';
 import { TikTokService } from '../download/tiktok.service';
+import { LoggerService } from '../logger/logger.service';
+import { Throttle } from 'src/common/decorators';
 
 type Context = SceneContext;
 
@@ -35,6 +38,7 @@ export class TelegramUpdate {
     private readonly usersService: UsersService,
     private readonly telegramService: TelegramService,
     private readonly messagesService: MessagesService,
+    private readonly logger: LoggerService,
   ) {
     this.isStartNotificationEnabled = strToBoolean(
       this.config.get('ENABLE_NOTIFICATION_ON_START'),
@@ -63,15 +67,71 @@ export class TelegramUpdate {
     }
   }
 
+  @Command('services')
+  @Throttle(5, 300000)
+  @UseGuards(TgThrottlerGuard)
+  async change(@Ctx() ctx: Context) {
+    const { from, chat } = ctx.message as unknown as TgTextMessage;
+
+    if (chat.type === 'private') {
+      return;
+    }
+    const user = await ctx.getChatMember(from.id);
+
+    if (user.status === UserStatus.Member) {
+      const message = await ctx.reply(getMessage('changeService.forbidden'));
+
+      setTimeout(() => {
+        ctx.deleteMessage(message.message_id).catch(() => {
+          this.logger.error('Delete message error');
+        });
+      }, 5000);
+
+      return;
+    }
+
+    const { disabledServices } = await this.groupsService.findOneByGroupId(
+      String(chat.id),
+    );
+
+    const tmessage = await ctx.reply(getMessage('changeService.message'), {
+      parse_mode: 'HTML',
+      reply_markup: {
+        inline_keyboard: [
+          ...generateArray(disabledServices),
+          [
+            {
+              text: 'Cancel',
+              callback_data: `service_change:cancel`,
+            },
+          ],
+        ],
+      },
+    });
+    await deleteUserMessage(ctx);
+    setTimeout(() => {
+      ctx.deleteMessage(tmessage.message_id).catch(() => {
+        this.logger.error('Delete message error');
+      });
+    }, 1000 * 60 * 5); // 5 min
+  }
+
   @On('text')
   @UseGuards(TgMsgThrottlerGuard)
   async onTextMessage(@Ctx() ctx: Context) {
     const disable = process.env.DISABLE;
     const message = ctx.message as unknown as TgTextMessage;
-    const { text } = message;
+    const { text, chat } = message;
     const videoService = identifyVideoService(text);
 
     if (!videoService || disable) {
+      return;
+    }
+
+    const { disabledServices = {} } = await this.groupsService.findOneByGroupId(
+      String(chat.id),
+    );
+    if (disabledServices[videoService]) {
       return;
     }
 
@@ -79,6 +139,7 @@ export class TelegramUpdate {
       ctx,
       this.videoServices[videoService],
     );
+    await deleteUserMessage(ctx);
   }
 
   @On('my_chat_member')
@@ -108,8 +169,92 @@ export class TelegramUpdate {
     }
   }
 
+  @Action(/^service_change.*/)
+  async onMessageServiceChangeAction(@Ctx() ctx: Context) {
+    const { from, data, message } = ctx.update['callback_query'] as TgAction;
+    const { chat } = message;
+    const [, value] = data.split(':');
+    const user = await ctx.getChatMember(from.id);
+
+    if (user.status === UserStatus.Member) {
+      return;
+    }
+
+    if (value === 'cancel') {
+      await ctx.deleteMessage();
+      return;
+    }
+
+    const { disabledServices } = await this.groupsService.toggleService(
+      String(chat.id),
+      value as VideoService,
+    );
+
+    await ctx.editMessageText(getMessage('changeService.message'), {
+      reply_markup: {
+        inline_keyboard: [
+          ...generateArray(disabledServices),
+          [
+            {
+              text: 'Cancel',
+              callback_data: `service_change:cancel`,
+            },
+          ],
+        ],
+      },
+    });
+  }
+
   @Action(/^message_job.*/)
   async onMessageJobAction(@Ctx() ctx: Context) {
     void this.messagesService.handleMessageJobAction(ctx);
   }
+}
+
+function generateArray(
+  data = {
+    [VideoService.TT]: false,
+    [VideoService.YT]: false,
+    [VideoService.IG]: false,
+  },
+) {
+  const services = [
+    { name: VideoService.TT, label: 'TikTok' },
+    { name: VideoService.YT, label: 'YouTube Shorts' },
+    { name: VideoService.IG, label: 'Instagram Reels' },
+  ];
+
+  return services.map((service) => {
+    let status = data[service.name];
+    if (status === undefined) {
+      status = true;
+    }
+
+    const text = status ? `❌ ${service.label}` : `✅ ${service.label}`;
+    const callbackData = `service_change:${service.name}`;
+
+    return [
+      {
+        text: text,
+        callback_data: callbackData,
+      },
+    ];
+  });
+}
+
+enum UserStatus {
+  Creator = 'creator',
+  Member = 'member',
+  Admin = 'administrator',
+}
+
+async function deleteUserMessage(ctx: Context) {
+  const { status: botStatus } = await ctx.getChatMember(7104630688);
+  if (botStatus !== UserStatus.Admin) {
+    return;
+  }
+
+  ctx.deleteMessage().catch(() => {
+    console.log('error');
+  });
 }
