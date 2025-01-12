@@ -1,2 +1,2 @@
-export * from './tikvideo';
-export * from './ttsave';
+export * from './tikVideo';
+export * from './ttSave';
