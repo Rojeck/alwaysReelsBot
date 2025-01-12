@@ -6,8 +6,7 @@ import { strToBoolean } from 'src/utils';
 import { DownloadService } from '../download.service';
 import { HttpService } from '@nestjs/axios';
 import { Inject, Injectable } from '@nestjs/common';
-import { fetchFromTtSave } from './scrappers/ttsave';
-import { fetchFromTikVideo } from './scrappers/tikvideo';
+import { fetchFromTtSave, fetchFromTikVideo } from './scrappers';
 
 @Injectable()
 export class TikTokService extends DownloadService {
