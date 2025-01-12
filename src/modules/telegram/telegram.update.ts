@@ -28,6 +28,7 @@ type Context = SceneContext;
 export class TelegramUpdate {
   private isStartNotificationEnabled: boolean;
   private videoServices: { [key in VideoService]: DownloadService };
+  private disabledBotServices: VideoService[];
 
   constructor(
     private readonly instagramService: InstagramService,
@@ -43,6 +44,11 @@ export class TelegramUpdate {
     this.isStartNotificationEnabled = strToBoolean(
       this.config.get('ENABLE_NOTIFICATION_ON_START'),
     );
+    this.disabledBotServices = [
+      strToBoolean(this.config.get('IG_DISABLE')) && VideoService.IG,
+      strToBoolean(this.config.get('TT_DISABLE')) && VideoService.TT,
+      strToBoolean(this.config.get('YT_DISABLE')) && VideoService.YT,
+    ].filter(Boolean);
     this.videoServices = {
       [VideoService.IG]: this.instagramService,
       [VideoService.YT]: this.youTubeService,
@@ -113,7 +119,7 @@ export class TelegramUpdate {
       ctx.deleteMessage(tmessage.message_id).catch(() => {
         this.logger.error('Delete message error');
       });
-    }, 1000 * 60 * 5); // 5 min
+    }, 1000 * 60 * 1); // 1 min
   }
 
   @On('text')
@@ -121,17 +127,27 @@ export class TelegramUpdate {
   async onTextMessage(@Ctx() ctx: Context) {
     const disable = process.env.DISABLE;
     const message = ctx.message as unknown as TgTextMessage;
-    const { text, chat } = message;
+    const { text, from, chat } = message;
     const videoService = identifyVideoService(text);
 
     if (!videoService || disable) {
       return;
     }
 
-    const { disabledServices = {} } = await this.groupsService.findOneByGroupId(
-      String(chat.id),
-    );
+    const { disabledServices = {} } =
+      (await this.groupsService.findOneByGroupId(String(chat.id))) || {};
+
     if (disabledServices[videoService]) {
+      return;
+    }
+
+    if (this.disabledBotServices.includes(videoService)) {
+      if (from.id === chat.id) {
+        await ctx.replyWithHTML(
+          `Сервіс <strong>${videoService}</strong> тимчасово відключений. Вибачте за незручності!`,
+        );
+      }
+
       return;
     }
 
@@ -220,7 +236,7 @@ function generateArray(
 ) {
   const services = [
     { name: VideoService.TT, label: 'TikTok' },
-    { name: VideoService.YT, label: 'YouTube Shorts' },
+    // { name: VideoService.YT, label: 'YouTube Shorts' },
     { name: VideoService.IG, label: 'Instagram Reels' },
   ];
 
@@ -249,12 +265,12 @@ enum UserStatus {
 }
 
 async function deleteUserMessage(ctx: Context) {
-  const { status: botStatus } = await ctx.getChatMember(7104630688);
-  if (botStatus !== UserStatus.Admin) {
+  // prohibit attempt to delete message inside bot
+  if (ctx.message.from.id === ctx.chat.id) {
     return;
   }
 
   ctx.deleteMessage().catch(() => {
-    console.log('error');
+    null;
   });
 }

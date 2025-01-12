@@ -7,6 +7,8 @@ import { VideoInfo, VideoService } from 'src/types';
 import { getPostId, strToBoolean } from 'src/utils';
 import { DownloadService } from '../download.service';
 import { fetchFromRapidAPI } from './scrappers/rapidApi';
+import { lastValueFrom } from 'rxjs';
+import { HttpProxyAgent } from 'http-proxy-agent';
 
 @Injectable()
 export class InstagramService extends DownloadService {
@@ -28,6 +30,24 @@ export class InstagramService extends DownloadService {
   }
 
   async fetchPost(postURL: string): Promise<VideoInfo | null> {
+    if (postURL.includes('/share/')) {
+      const proxyUrl = process.env.PROXY_URL;
+      const agent = new HttpProxyAgent(proxyUrl);
+      const response = await lastValueFrom(
+        this.httpService.request({
+          url: postURL,
+          method: 'GET',
+          httpAgent: agent,
+          validateStatus: () => true,
+        }),
+      );
+      const resultUrl = response?.request?.res?.responseUrl;
+
+      if (resultUrl) {
+        postURL = resultUrl;
+      }
+    }
+
     const postId = getPostId(postURL, VideoService.IG);
     const cacheKey = `${VideoService.IG}:${postId}`;
     let result = null;

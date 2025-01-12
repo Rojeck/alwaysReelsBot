@@ -25,7 +25,6 @@ export class TikTokService extends DownloadService {
       this.config.get('TT_DISABLE_TIK_VIDEO'),
     );
     this.ttDisableTtSave = strToBoolean(this.config.get('TT_DISABLE_TT_SAVE'));
-    this.ttDisableWmr = strToBoolean(this.config.get('TT_DISABLE_WMR'));
   }
 
   async fetchPost(postURL: string): Promise<VideoInfo | null> {

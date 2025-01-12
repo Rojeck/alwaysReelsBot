@@ -89,14 +89,7 @@ export class TelegramService {
   }
 
   async replyWithVideo(ctx: Context, videoInfo: VideoInfo, footer: any) {
-    const {
-      useStream,
-      url,
-      thumbnail: thumbnailUrl,
-      width,
-      height,
-      duration,
-    } = videoInfo;
+    const { useStream, url } = videoInfo;
 
     const sendVideoStream = async () => {
       const response = await axios.get(url, {
