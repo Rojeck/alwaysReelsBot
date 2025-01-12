@@ -18,6 +18,7 @@ import {
 import { AUDIT_EVENTS_MODEL } from './audit-events.providers';
 import { AuditEvents } from './audit-events.schema';
 import { MessagesService } from '../messages/messages.service';
+import { TikTokDownloaders } from 'src/types/tiktok';
 
 @Injectable()
 export class AuditEventsService {
@@ -37,7 +38,7 @@ export class AuditEventsService {
   create(
     chat: Chat,
     user: MessageFrom,
-    downloadedVia: InstaDownloaders | YTDownloaders,
+    downloadedVia: InstaDownloaders | YTDownloaders | TikTokDownloaders,
     service: VideoService,
   ) {
     const { id } = chat;

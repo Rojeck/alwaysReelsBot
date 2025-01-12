@@ -5,21 +5,21 @@ import { AxiosResponse } from 'axios';
 import { load } from 'cheerio';
 import { checkVideoURL } from 'src/utils';
 import { defaultVideoInfo } from 'src/constants';
-import { InstaDownloaders, VideoInfo, VideoService } from 'src/types';
+import { VideoInfo, VideoService } from 'src/types';
+import { TikTokDownloaders } from 'src/types/tiktok';
 
-export const fetchFromSnapInsta = async (
-  postId: string,
+export const fetchFromTikVideo = async (
+  url: string,
   httpService: HttpService,
-): Promise<VideoInfo | null | string> => {
+): Promise<VideoInfo | null> => {
   const form = new FormData();
-  form.append('t', 'media');
   form.append('lang', 'ru');
-  form.append('q', `https://www.instagram.com/reels/${postId}`);
+  form.append('q', url);
 
   const response = (await lastValueFrom(
     httpService
       .request({
-        url: process.env.SNAP_INSTA_URL,
+        url: process.env.TIK_VIDEO_URL,
         method: 'POST',
         data: form,
       })
@@ -33,10 +33,20 @@ export const fetchFromSnapInsta = async (
   if (!response.data.data) return null;
 
   const $ = load(response.data.data);
-  const thumbnail = $('.download-items__thumb img').attr('src');
-  const video_url = $('.download-items__btn a').attr('href');
+  const thumbnail = $('.thumbnail .image-tik img').attr('src');
 
-  if (!video_url || !thumbnail) {
+  let video_url;
+  $('.tik-right .dl-action a').each((index, element) => {
+    const href = $(element).attr('href');
+    if (video_url) {
+      return;
+    }
+    if (href.includes('mp4')) {
+      video_url = href;
+    }
+  });
+
+  if (!video_url) {
     return null;
   }
 
@@ -50,7 +60,7 @@ export const fetchFromSnapInsta = async (
     height: defaultVideoInfo.height,
     thumbnail,
     duration: defaultVideoInfo.duration,
-    service: VideoService.IG,
-    downloadVia: InstaDownloaders.SNAPINSTA,
+    service: VideoService.TT,
+    downloadVia: TikTokDownloaders.TIK_VIDEO,
   };
 };

@@ -8,7 +8,9 @@ export const defaultVideoInfo = {
 
 export const servicesPatterns = {
   [VideoService.IG]:
-    /^https:\/\/(?:www\.)?instagram\.com\/reels?\/([a-zA-Z0-9_-]+)\/?/,
-  [VideoService.YT]:
-    /^https:\/\/(?:www\.)?youtube\.com\/shorts\/([a-zA-Z0-9_-]+)\/?/,
+    /^https:\/\/(?:www\.)?instagram\.com\/(?:share\/reel|reels?)\/([a-zA-Z0-9_-]+)\/?/,
+  // [VideoService.YT]:
+  //   /^https:\/\/(?:www\.)?youtube\.com\/shorts\/([a-zA-Z0-9_-]+)\/?/,
+  [VideoService.TT]:
+    /(?<=\/video\/)\d+|(?<=https:\/\/vm\.tiktok\.com\/)[\w\d]+/,
 };

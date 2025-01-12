@@ -151,6 +151,6 @@ export type GraphQLResponse = {
 
 export enum InstaDownloaders {
   GRAPHQL = 'graphql',
-  SNAPINSTA = 'snapinsta',
-  SAVEFROM = 'savefrom',
+  PUBLER = 'publer',
+  RAPID_API = 'rapid-api',
 }
