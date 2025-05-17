@@ -9,6 +9,7 @@ import { DownloadModule } from '../download/download.module';
 import { options } from './telegram-config.factory';
 import { TelegramUpdate } from './telegram.update';
 import { TelegramService } from './telegram.service';
+import { YtdlpModule } from '../yt-dlp/yt-dlp.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { TelegramService } from './telegram.service';
     GroupsModule,
     UsersModule,
     DownloadModule,
+    YtdlpModule,
   ],
   providers: [TelegramUpdate, TelegramService],
 })

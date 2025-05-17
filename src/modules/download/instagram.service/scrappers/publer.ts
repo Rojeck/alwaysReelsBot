@@ -1,4 +1,5 @@
 import { HttpService } from '@nestjs/axios';
+import { HttpProxyAgent } from 'http-proxy-agent';
 import { InstaDownloaders, VideoInfo, VideoService } from 'src/types';
 import { catchError, lastValueFrom, of } from 'rxjs';
 import { AxiosResponse } from 'axios';
@@ -35,6 +36,8 @@ export const fetchFromPubler = async (
   postId: string,
   httpService: HttpService,
 ): Promise<VideoInfo | null> => {
+  const proxyUrl = process.env.PROXY_URL;
+  const agent = new HttpProxyAgent(proxyUrl);
   const response = (await lastValueFrom(
     httpService
       .request({
@@ -43,6 +46,7 @@ export const fetchFromPubler = async (
         data: {
           url: `https://www.instagram.com/reels/${postId}`,
         },
+        httpAgent: agent,
         headers,
       })
       .pipe(
@@ -66,6 +70,7 @@ export const fetchFromPubler = async (
         .request({
           url: `${process.env.PUBLER_API_URL}/api/v1/job_status/${jobId}`,
           method: 'GET',
+          httpAgent: agent,
         })
         .pipe(
           catchError(() => {

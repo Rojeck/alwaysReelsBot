@@ -153,4 +153,5 @@ export enum InstaDownloaders {
   GRAPHQL = 'graphql',
   PUBLER = 'publer',
   RAPID_API = 'rapid-api',
+  YTDLP = 'ytdlp',
 }

@@ -9,21 +9,26 @@ import { DownloadService } from '../download.service';
 import { fetchFromRapidAPI } from './scrappers/rapidApi';
 import { lastValueFrom } from 'rxjs';
 import { HttpProxyAgent } from 'http-proxy-agent';
+import { YtdlpService } from 'src/modules/yt-dlp/yt-dlp.service';
+import { fetchFromYtdlp } from './scrappers/ytdlp';
 
 @Injectable()
 export class InstagramService extends DownloadService {
   private igDisablePubler: boolean;
   private igDisableGraphQL: boolean;
   private igDisableRapidAPI: boolean;
+  private igDisableYtdlp: boolean;
 
   constructor(
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private httpService: HttpService,
+    private ytdlpService: YtdlpService,
     private config: ConfigService,
   ) {
     super();
     this.igDisablePubler = strToBoolean(this.config.get('IG_DISABLE_PUBLER'));
     this.igDisableGraphQL = strToBoolean(this.config.get('IG_DISABLE_GRAPHQL'));
+    this.igDisableYtdlp = strToBoolean(this.config.get('IG_DISABLE_YTDLP'));
     this.igDisableRapidAPI = strToBoolean(
       this.config.get('IG_DISABLE_RAPID_API'),
     );
@@ -56,12 +61,16 @@ export class InstagramService extends DownloadService {
 
     if (cachedData) return cachedData;
 
-    if (!this.igDisableGraphQL) {
+    if (!result && !this.igDisableGraphQL) {
       result = await fetchFromGraphQL(postId, this.httpService);
     }
 
     if (!result && !this.igDisablePubler) {
       result = await fetchFromPubler(postId, this.httpService);
+    }
+
+    if (!result && !this.igDisableYtdlp) {
+      result = await fetchFromYtdlp(postURL, this.ytdlpService);
     }
 
     if (!result && !this.igDisableRapidAPI) {

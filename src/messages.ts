@@ -1,9 +1,12 @@
 import { Chat, MessageFrom } from './types';
 
+const donateJar = 'https://send.monobank.ua/jar/8nsQPpKRV3';
+
 export default {
   start: `<b>Бот для завантаження Instagram Reels або TikTok</b>\n
   Надішліть посилання на reels/tiktok, який ви хочете завантажити, і бот відповість вам цим відео у форматі MP4.\n
-  Ви можете додати бота до вашої телеграм-групи. Якщо хтось у групі надішле посилання на reels або tiktok, бот відповість відповідним відео.`,
+  Ви можете додати бота до вашої телеграм-групи. Якщо хтось у групі надішле посилання на reels або tiktok, бот відповість відповідним відео.\n
+  Проект працює виключно на благодійних донатах, які ви можете зробити на моно-банку: <a href="${donateJar}">посилання (тиць)</a>`,
   startBtn: 'Додати до групи',
   footerPrivate: 'Без стиснення',
   footerPublic: (name: string, link: string) =>
