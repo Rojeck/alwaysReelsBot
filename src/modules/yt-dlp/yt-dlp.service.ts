@@ -1,6 +1,7 @@
 import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import YTDlpWrap from 'yt-dlp-wrap';
 import * as fs from 'fs';
+import * as path from 'path';
 
 import { YT_DLP_BINARY_PATH, YT_DLP_PLATFORM } from '../../constants';
 
@@ -26,7 +27,14 @@ export class YtdlpService implements OnModuleInit {
         throw new Error('Cannot determine latest yt-dlp version');
       }
 
-      const binaryExists = fs.existsSync(`${YT_DLP_BINARY_PATH}/bin.bin`);
+      const parentDir = path.dirname(YT_DLP_BINARY_PATH);
+
+      if (!fs.existsSync(parentDir)) {
+        fs.mkdirSync(parentDir, { recursive: true });
+        this.logger.log(`Created directory: ${parentDir}`);
+      }
+
+      const binaryExists = fs.existsSync(`${YT_DLP_BINARY_PATH}`);
       let currentVersion = '';
 
       if (binaryExists) {
