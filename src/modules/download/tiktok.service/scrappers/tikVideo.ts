@@ -30,7 +30,7 @@ export const fetchFromTikVideo = async (
       ),
   )) as AxiosResponse;
 
-  if (!response.data.data) return null;
+  if (!response?.data?.data) return null;
 
   const $ = load(response.data.data);
   const thumbnail = $('.thumbnail .image-tik img').attr('src');

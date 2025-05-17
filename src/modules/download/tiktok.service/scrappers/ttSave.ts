@@ -28,7 +28,7 @@ export const fetchFromTtSave = async (
       ),
   )) as AxiosResponse;
 
-  if (!response.data) return null;
+  if (!response?.data) return null;
 
   const $ = load(response.data);
   const downloadReadyBlock = $('#button-download-ready');

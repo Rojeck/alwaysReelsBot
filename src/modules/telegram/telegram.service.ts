@@ -81,6 +81,7 @@ export class TelegramService {
 
     await this.replyWithVideo(ctx, videoInfo, footer);
     void this.auditEventsService.create(
+      messageText,
       chat,
       from,
       videoInfo.downloadVia,

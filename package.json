@@ -40,11 +40,12 @@
     "nestjs-telegraf": "^2.7.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
+    "path": "^0.12.7",
     "query-string": "6.0.0",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.2.0",
     "telegraf": "^4.15.2",
-    "youtube-dl-exec": "^3.0.6"
+    "yt-dlp-wrap": "^2.3.12"
   },
   "devDependencies": {
     "@nestjs/cli": "^9.0.0",

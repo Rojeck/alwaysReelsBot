@@ -36,6 +36,7 @@ export class AuditEventsService {
   }
 
   create(
+    url,
     chat: Chat,
     user: MessageFrom,
     downloadedVia: InstaDownloaders | YTDownloaders | TikTokDownloaders,
@@ -46,6 +47,8 @@ export class AuditEventsService {
     const newAuditEvent = new this.auditEvents({
       groupId: String(id),
       downloadedVia,
+      url,
+      sendBy: user.id,
       service,
     });
 
